@@ -34,6 +34,11 @@ func (sm *SessionManager) Count() int {
 	return count
 }
 
+func (sm *SessionManager) Check(trmId string) bool {
+	_, exists := sm.sessions.Load(trmId)
+	return exists
+}
+
 func (sm *SessionManager) Send(trmId string, message string) bool {
 	value, exists := sm.sessions.Load(trmId)
 	if !exists {

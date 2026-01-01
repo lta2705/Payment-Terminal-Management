@@ -1,8 +1,8 @@
 package transport
 
 import (
+	"Payment-Terminal-Management/internal/service"
 	"context"
-	"github.com/segmentio/kafka-go"
 	"net"
 )
 
@@ -12,8 +12,8 @@ type Server struct {
 
 func NewServer(
 	sessions SessionManager,
-	producer *kafka.Writer,
-	consumer *kafka.Reader,
+	producer service.ProducerService,
+	consumer service.ConsumerService,
 ) *Server {
 	return &Server{
 		Handler: NewHandler(sessions, producer, consumer),

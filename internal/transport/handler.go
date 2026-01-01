@@ -1,35 +1,38 @@
 package transport
 
 import (
-	"Payment-Terminal-Management/internal/dto"
+	"Payment-Terminal-Management/internal/service"
 	"context"
-	"encoding/json"
+	"github.com/Jeffail/gabs"
 	"github.com/bytedance/gopkg/util/logger"
-	"github.com/segmentio/kafka-go"
 	"net"
 )
 
 type SessionManager interface {
 	Add(conn net.Conn, terminalId string)
 	Remove(key string)
+	Check(terminalId string) bool
+	Send(trmId string, message string) bool
+	Count() int
+	Broadcast(message string)
 	CloseAll()
 }
 
 type Handler struct {
 	Sessions      SessionManager
-	KafkaProducer *kafka.Writer
-	KafkaConsumer *kafka.Reader
+	KafkaProducer service.ProducerService
+	KafkaConsumer service.ConsumerService
 }
 
 func NewHandler(
 	sessions SessionManager,
-	producer *kafka.Writer,
-	consumer *kafka.Reader,
+	kafkaProducer service.ProducerService,
+	kafkaConsumer service.ConsumerService,
 ) *Handler {
 	return &Handler{
 		Sessions:      sessions,
-		KafkaProducer: producer,
-		KafkaConsumer: consumer,
+		KafkaProducer: kafkaProducer,
+		KafkaConsumer: kafkaConsumer,
 	}
 }
 
@@ -54,28 +57,40 @@ func (h *Handler) Handle(ctx context.Context, conn net.Conn) {
 				return
 			}
 
-			h.processMessage(conn, addr, buf[:n])
+			h.processMessage(conn, buf[:n])
 		}
 	}
 }
 
-func (h *Handler) processMessage(conn net.Conn, addr string, data []byte) {
-	var msg dto.RegisterDTO
+func (h *Handler) processMessage(conn net.Conn, data []byte) {
+	logger.Info(string(data))
 
-	if err := json.Unmarshal(data, &msg); err != nil {
+	jsonParsed, err := gabs.ParseJSON(data)
+	if err != nil {
 		logger.Error("Invalid message format", err)
 		return
 	}
+	logger.Info("Object after parsed", jsonParsed)
+	MsgType := jsonParsed.S("msgType").Data().(string)
 
-	switch msg.MsgType {
+	switch MsgType {
 	case "0":
-		h.Sessions.Add(conn, msg.TerminalId)
-		logger.Info("Session opened:", msg.TerminalId)
+		TrmId, err := jsonParsed.Path("trmId").Data().(string)
+		if !err {
+			logger.Error("TerminalId field missing or not a string")
+			return
+		}
+		h.Sessions.Add(conn, TrmId)
+		logger.Info("Session opened:", TrmId)
 
 	case "2":
 
+		err := h.KafkaProducer.ProduceMessage(string(data))
+		if err != nil {
+			logger.Info("Failed to send message to Kafka", err)
+		}
 	default:
-		logger.Warn("Unknown MsgType:", msg.MsgType)
+		logger.Warn("Unknown MsgType:", MsgType)
 	}
 
 	conn.Write([]byte("ACK\n"))

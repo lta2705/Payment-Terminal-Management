@@ -1,6 +1,7 @@
 package app
 
 import (
+	"Payment-Terminal-Management/internal/service"
 	"Payment-Terminal-Management/internal/transport"
 	"context"
 	"net"
@@ -11,12 +12,14 @@ type App struct {
 	Listener net.Listener
 	Server   *transport.Server
 	wg       sync.WaitGroup
+	Consumer service.ConsumerService
 }
 
-func NewApp(listener net.Listener, server *transport.Server) *App {
+func NewApp(listener net.Listener, server *transport.Server, Consumer service.ConsumerService) *App {
 	return &App{
 		Listener: listener,
 		Server:   server,
+		Consumer: Consumer,
 	}
 }
 

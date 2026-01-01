@@ -3,6 +3,7 @@ module Payment-Terminal-Management
 go 1.24
 
 require (
+	github.com/Jeffail/gabs v1.4.0 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/google/wire v0.7.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
