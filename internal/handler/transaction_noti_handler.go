@@ -59,10 +59,5 @@ func (h *TransactionNotiHandlerIpml) Handle(raw []byte) error {
 		}
 	}
 
-	err2 := h.sender.SendMessage(string(raw))
-	if err2 != nil {
-		return err2
-	}
-
 	return nil
 }

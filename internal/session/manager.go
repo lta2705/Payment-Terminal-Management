@@ -40,7 +40,10 @@ func (sm *SessionManager) Check(trmId string) bool {
 	_, exists := sm.sessions.Load(trmId)
 	if !exists {
 		logger.Warn("Session not found for terminal:", trmId)
+		return false
 	}
+
+	logger.Info("Session found:", trmId)
 	return exists
 }
 
