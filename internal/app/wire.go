@@ -5,6 +5,7 @@ package app
 
 import (
 	"Payment-Terminal-Management/internal/config"
+	"Payment-Terminal-Management/internal/handler"
 	"Payment-Terminal-Management/internal/middleware"
 	"Payment-Terminal-Management/internal/service"
 	"Payment-Terminal-Management/internal/session"
@@ -28,10 +29,7 @@ var ProducerSet = wire.NewSet(
 	middleware.CreateKafkaProducer,
 	worker.NewProducerWorker,
 	service.NewProduceService,
-	//wire.Bind(
-	//	new(service.ProducerService),
-	//	new(*service.ProducerServiceImpl),
-	//),
+	wire.Bind(new(worker.KafkaProducerWorker), new(*worker.KafkaProducerWorkerImpl)),
 )
 
 var ConsumerSet = wire.NewSet(
@@ -54,12 +52,16 @@ var sessionSet = wire.NewSet(
 	),
 )
 
+var handlerSet = wire.NewSet(
+	handler.NewTransactionNotiHandler)
+
 func InitializeApp() (*App, error) {
 	wire.Build(
 		ProvideListener,
 		sessionSet,
 		ConsumerSet,
 		ProducerSet,
+		handlerSet,
 		ServerSet,
 		NewApp,
 	)

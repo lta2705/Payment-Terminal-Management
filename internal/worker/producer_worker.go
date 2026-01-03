@@ -6,25 +6,28 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type KafkaProducerWorker struct {
+type KafkaProducerWorker interface {
+	SendMessage(value string) error
+}
+type KafkaProducerWorkerImpl struct {
 	Writer *kafka.Writer
 }
 
-func (pw *KafkaProducerWorker) SendMessage(value string) error {
+func (pw *KafkaProducerWorkerImpl) SendMessage(value string) error {
 	logger.Info("Received message from terminal", value)
+	msg := kafka.Message{
+		Value: []byte(value),
+	}
 	err := pw.Writer.WriteMessages(context.Background(),
-		kafka.Message{
-			Value:  []byte(value),
-			Offset: kafka.SeekCurrent,
-		},
+		msg,
 	)
 
-	logger.Info("Message successfully to Kafka", value, "with offset", kafka.Message{Offset: kafka.SeekCurrent})
+	logger.Info("Message successfully to Kafka:", value, "through topic:", msg.Topic, "with offset:", msg.Offset)
 	return err
 }
 
-func NewProducerWorker(writer *kafka.Writer) *KafkaProducerWorker {
-	return &KafkaProducerWorker{
+func NewProducerWorker(writer *kafka.Writer) *KafkaProducerWorkerImpl {
+	return &KafkaProducerWorkerImpl{
 		Writer: writer,
 	}
 }

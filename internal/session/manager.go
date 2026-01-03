@@ -22,6 +22,7 @@ func (sm *SessionManager) Add(conn net.Conn, trmId string) {
 }
 
 func (sm *SessionManager) Remove(addr string) {
+	logger.Info("Removing session:", addr)
 	sm.sessions.Delete(addr)
 }
 
@@ -35,7 +36,11 @@ func (sm *SessionManager) Count() int {
 }
 
 func (sm *SessionManager) Check(trmId string) bool {
+	logger.Info("Checking session for terminal:", trmId)
 	_, exists := sm.sessions.Load(trmId)
+	if !exists {
+		logger.Warn("Session not found for terminal:", trmId)
+	}
 	return exists
 }
 

@@ -71,11 +71,11 @@ func (h *Handler) processMessage(conn net.Conn, data []byte) {
 		return
 	}
 	logger.Info("Object after parsed", jsonParsed)
-	MsgType := jsonParsed.S("msgType").Data().(string)
+	MsgType := jsonParsed.S("msg_type").Data().(string)
 
 	switch MsgType {
 	case "0":
-		TrmId, err := jsonParsed.Path("trmId").Data().(string)
+		TrmId, err := jsonParsed.Path("trm_id").Data().(string)
 		if !err {
 			logger.Error("TerminalId field missing or not a string")
 			return

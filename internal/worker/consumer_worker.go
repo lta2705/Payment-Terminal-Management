@@ -6,11 +6,14 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type KafkaConsumerWorker struct {
+type KafkaConsumerWorker interface {
+	ConsumeMessage(handler func(msg kafka.Message) error)
+}
+type KafkaConsumerWorkerImpl struct {
 	Reader *kafka.Reader
 }
 
-func (cw *KafkaConsumerWorker) ConsumeMessage(handler func(msg kafka.Message) error) {
+func (cw *KafkaConsumerWorkerImpl) ConsumeMessage(handler func(msg kafka.Message) error) {
 	for {
 		msg, err := cw.Reader.FetchMessage(context.Background())
 		if err != nil {
@@ -31,8 +34,8 @@ func (cw *KafkaConsumerWorker) ConsumeMessage(handler func(msg kafka.Message) er
 	}
 }
 
-func NewConsumerWorker(reader *kafka.Reader) *KafkaConsumerWorker {
-	return &KafkaConsumerWorker{
+func NewConsumerWorker(reader *kafka.Reader) KafkaConsumerWorker {
+	return &KafkaConsumerWorkerImpl{
 		Reader: reader,
 	}
 }
