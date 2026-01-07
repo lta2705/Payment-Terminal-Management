@@ -70,32 +70,38 @@ func (h *Handler) processMessage(conn net.Conn, data []byte) {
 		logger.Error("Invalid message format", err)
 		return
 	}
-	logger.Info("Object after parsed", jsonParsed)
-	MsgType := jsonParsed.S("msg_type").Data().(string)
 
-	switch MsgType {
+	msgTypeRaw := jsonParsed.Search("msgType").Data()
+	msgType, ok := msgTypeRaw.(string)
+	if !ok {
+		logger.Error("msgType is missing or not a string")
+		return
+	}
+
+	switch msgType {
 	case "0":
-		TrmId, err := jsonParsed.Path("trm_id").Data().(string)
-		if !err {
+		trmIdRaw := jsonParsed.Path("trmId").Data()
+		trmId, ok := trmIdRaw.(string)
+		if !ok || trmId == "" {
 			logger.Error("TerminalId field missing or not a string")
 			return
 		}
-		h.Sessions.Add(conn, TrmId)
-		logger.Info("Session opened:", TrmId)
+
+		h.Sessions.Add(conn, trmId)
+		logger.Info("Session opened:", trmId)
 
 	case "2":
-
 		err := h.KafkaProducer.ProduceMessage(string(data))
 		if err != nil {
-			logger.Info("Failed to send message to Kafka", err)
+			logger.Error("Failed to send message to Kafka", err)
 		}
+
 	default:
-		logger.Warn("Unknown MsgType:", MsgType)
+		logger.Warn("Unknown MsgType:", msgType)
 	}
 
 	conn.Write([]byte("ACK\n"))
 }
-
 func (h *Handler) Close() {
 	h.Sessions.CloseAll()
 }
