@@ -100,7 +100,6 @@ func (h *Handler) processMessage(conn net.Conn, data []byte) {
 		logger.Warn("Unknown MsgType:", msgType)
 	}
 
-	conn.Write([]byte("ACK\n"))
 }
 func (h *Handler) Close() {
 	h.Sessions.CloseAll()

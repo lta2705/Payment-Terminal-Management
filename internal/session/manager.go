@@ -59,7 +59,7 @@ func (sm *SessionManager) Send(trmId string, message string) bool {
 		logger.Info("Session is not a net conn:")
 		return false
 	}
-	_, err := conn.Write([]byte(message))
+	_, err := conn.Write([]byte(message + "\n"))
 	if err != nil {
 		logger.Error("Error in sending message to terminal", err)
 		return false

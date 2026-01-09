@@ -50,6 +50,7 @@ func (h *TransactionNotiHandlerIpml) Handle(raw []byte) error {
 		return nil
 	}
 
+	logger.Info("Send msg to Terminal:", trmId, " msg:", string(raw))
 	ok = h.session.Send(trmId, string(raw))
 	if !ok {
 		logger.Info("Failed to send message to terminal:", trmId)
