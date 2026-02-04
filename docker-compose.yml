@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payment-terminal-app
+    ports:
+      - "8089:8089"
+    environment:
+      # Server Config
+      PORT: ${PORT:-8089}
+      
+      # Kafka Config - use internal Docker network hostnames
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-broker:29092}
+      KAFKA_PRODUCER_ACKS: ${KAFKA_PRODUCER_ACKS:-all}
+      KAFKA_PRODUCER_RETRIES: ${KAFKA_PRODUCER_RETRIES:-10}
+      KAFKA_PRODUCER_MAX_IN_FLIGHT_REQUESTS: ${KAFKA_PRODUCER_MAX_IN_FLIGHT_REQUESTS:-5}
+      KAFKA_PRODUCER_ENABLE_IDEMPOTENCE: ${KAFKA_PRODUCER_ENABLE_IDEMPOTENCE:-true}
+      KAFKA_PRODUCER_TOPIC: ${KAFKA_PRODUCER_TOPIC:-transaction_response}
+      KAFKA_CONSUMER_GROUP_ID: ${KAFKA_CONSUMER_GROUP_ID:-transaction_forwarder_group}
+      KAFKA_CONSUMER_TOPIC: ${KAFKA_CONSUMER_TOPIC:-transaction_request}
+      KAFKA_CONSUMER_ENABLE_AUTO_COMMIT: ${KAFKA_CONSUMER_ENABLE_AUTO_COMMIT:-false}
+      KAFKA_CONSUMER_AUTO_OFFSET_RESET: ${KAFKA_CONSUMER_AUTO_OFFSET_RESET:-latest}
+      KAFKA_CONSUMER_SESSION_TIMEOUT: ${KAFKA_CONSUMER_SESSION_TIMEOUT:-60000}
+      KAFKA_CONSUMER_HEARTBEAT_INTERVAL: ${KAFKA_CONSUMER_HEARTBEAT_INTERVAL:-20000}
+      KAFKA_CONSUMER_ISOLATION_LEVEL: ${KAFKA_CONSUMER_ISOLATION_LEVEL:-read_committed}
+      
+      # Database Config - use internal Docker network hostnames
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-payment_terminal}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_SSLMODE: ${DB_SSLMODE:-disable}
+    # Connect to external network where Kafka, AKHQ, PostgreSQL are running
+    networks:
+      - payment-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+networks:
+  payment-network:
+    # Use external network if Kafka and PostgreSQL are running in another docker-compose
+    external: true
+    name: go-payment-gateway_default
+    # If services are in the same docker-compose, comment out 'external: true' above
+    # and uncomment below:
+    # driver: bridge

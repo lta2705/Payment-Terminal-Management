@@ -2,6 +2,7 @@ package config
 
 import (
 	"Payment-Terminal-Management/internal/utils"
+
 	"github.com/bytedance/gopkg/util/logger"
 	"github.com/joho/godotenv"
 )
@@ -29,8 +30,11 @@ func LoadKafkaProducerConfig() *KafkaProducerConfig {
 	// Load .env file
 	loadConfig()
 
+	bootstrapServers := utils.String("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+	logger.Info("Kafka Producer Bootstrap Servers:", bootstrapServers)
+
 	return &KafkaProducerConfig{
-		BootstrapServers:  []string{utils.String("KAFKA_BROKER", "localhost:9092")},
+		BootstrapServers:  []string{bootstrapServers},
 		ProducerTopic:     utils.String("KAFKA_PRODUCER_TOPIC", "transaction_response"),
 		Acks:              utils.String("KAFKA_PRODUCER_ACKS", "all"),
 		Retries:           utils.Int("KAFKA_PRODUCER_RETRIES", 5),
@@ -42,8 +46,12 @@ func LoadKafkaProducerConfig() *KafkaProducerConfig {
 func LoadKafkaConsumerConfig() *KafkaConsumerConfig {
 	// Load .env file
 	loadConfig()
+
+	bootstrapServers := utils.String("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+	logger.Info("Kafka Consumer Bootstrap Servers:", bootstrapServers)
+
 	return &KafkaConsumerConfig{
-		BootstrapServers:  []string{utils.String("KAFKA_BROKER", "localhost:9092")},
+		BootstrapServers:  []string{bootstrapServers},
 		ConsumerGroupID:   utils.String("KAFKA_CONSUMER_GROUP_ID", "consumer_group"),
 		ConsumerTopic:     utils.String("KAFKA_CONSUMER_TOPIC", "consumer_topic"),
 		AutoOffsetReset:   utils.String("KAFKA_CONSUMER_AUTO_OFFSET_RESET", "earliest"),
